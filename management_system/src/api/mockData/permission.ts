@@ -1,7 +1,12 @@
 // src/mockData/permission
 import Mock from 'mockjs'
+
+interface RequestConfig {
+  body: string
+}
+
 export default {
-  getMenu: config => {
+  getMenu: (config: RequestConfig) => {
     const { username, password } = JSON.parse(config.body)
     // 先判断用户是否存在
     // 判断账号和密码是否对应

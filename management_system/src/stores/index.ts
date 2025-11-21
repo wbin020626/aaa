@@ -43,26 +43,34 @@ export const useAllDataStore = defineStore('allData', () =>{
   //动态路由
   function addMenu(router) {
     const menu = state.value.menuList
-    const module = import.meta.glob(`@/views/**/*.vue`)
+    const modules = import.meta.glob('@/views/**/*.vue')
+    
     const routeArray = []
     menu.forEach((item) => {
       if (item.children) {
         item.children.forEach((child) => {
-          const url = '../views/' + child.url + '.vue'
-          child.component = module[url]
-          routeArray.push(...item.children)
+          const url = `/src/views/${child.url}.vue`
+          child.component = modules[url]
+          if (!child.component) {
+            console.error(`组件未找到: ${url}`)
+          }
         })
+        routeArray.push(...item.children)
       } else {
-        const url = '../views/' + item.url + '.vue'
-        item.component = module[url]
+        const url = `/src/views/${item.url}.vue`
+        item.component = modules[url]
+        if (!item.component) {
+          console.error(`组件未找到: ${url}`)
+        }
         routeArray.push(item)
       }
     })
 
     routeArray.forEach((item) => {
-      if (!router.hasRoute(item.name)) {
+      if (item.component && !router.hasRoute(item.name)) {
         state.value.routerList.push(item)
         router.addRoute('main', item)
+        console.log(`路由已添加: ${item.name}`)
       }
     })
   }
