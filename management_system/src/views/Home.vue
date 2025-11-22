@@ -1,36 +1,30 @@
 <!-- src/views/Home.vue -->
 <script setup lang="ts">
-// import axios from "axios"
-import { ref,getCurrentInstance,onMounted ,reactive} from "vue"
+import { ref,getCurrentInstance,onMounted,onBeforeUnmount,reactive} from "vue"
 import Mock from "mockjs"
-import * as echarts from "echarts"//按需引入echarts
+import * as echarts from "echarts"
+import type { EChartsType } from "echarts"
+
 //获取当前实例的代理对象,相当于this.$api
-const {proxy} = getCurrentInstance()
+const {proxy} = getCurrentInstance() as any
 
 const getImageUrl = (user:string)=>{
   return new URL(`../assets/images/${user}.png`,import.meta.url).href
 }
 
-//proxy代替axios
-//axios参数：url、method、data、params、headers
-//axios返回值：Promise对象
-//axios.get(url, {params: {}})
-//axios.post(url, data, {headers: {}})
-//axios.put(url, data, {headers: {}})
-//axios.delete(url, {params: {}})
-// axios({
-//   url: "/api/home/geTabletData",
-//   method: "get",
-// }).then(res=>{
-//   //拦截请求、制造数据=>mockjs
-//   if(res.data.code === 200){
-//    tableData.value = res.data.data.tableData
-//   }
-// })
-//这个tableData是假数据，等会我们使用axios请求mock数据
 const tableData = ref([])
-const countData = ref([])
-const observer = ref(null)
+const countData = ref<any[]>([])
+const observer = ref<ResizeObserver | null>(null)
+// 保存echarts实例的引用，用于销毁
+const chartInstances = ref<{
+  oneEchart: EChartsType | null,
+  twoEchart: EChartsType | null,
+  threeChart: EChartsType | null
+}>({
+  oneEchart: null,
+  twoEchart: null,
+  threeChart: null
+})
 
 
 const getTableData = async()=>{
@@ -46,31 +40,31 @@ const getChartData = async()=>{
   //折线图
   //折线图的配置项:x轴和series
   xOptions.xAxis.data = orderData.date
-  xOptions.series = Object.keys(orderData.data[0]).map(val=>{
+  xOptions.series = Object.keys(orderData.data[0]).map((val: any)=>{
     return {
       name:val,
       type:"line",
-      data:orderData.data.map(item=>item[val])
+      data:orderData.data.map((item: any)=>item[val])
     }
   })
-  const oneEchart = echarts.init(proxy.$refs['echart'])
-  oneEchart.setOption(xOptions)
+  chartInstances.value.oneEchart = echarts.init(proxy.$refs['echart'])
+  chartInstances.value.oneEchart.setOption(xOptions)
   //对第二个图表进行配置
-  xOptions.xAxis.data = userData.map(item=>item.date)
+  xOptions.xAxis.data = userData.map((item: any)=>item.date)
   xOptions.series = [
     {
       name:"新增用户",
       type:"bar",
-      data:userData.map(item=>item.new)
+      data:userData.map((item: any)=>item.new)
     },
     {
       name:"活跃用户",
       type:"bar",
-      data:userData.map(item=>item.active)
+      data:userData.map((item: any)=>item.active)
     }
   ]
-  const twoEchart = echarts.init(proxy.$refs['userEchart'])
-  twoEchart.setOption(xOptions)
+  chartInstances.value.twoEchart = echarts.init(proxy.$refs['userEchart'])
+  chartInstances.value.twoEchart.setOption(xOptions)
   //对第三个图表饼图进行配置
   pieOptions.series = [
     {
@@ -78,14 +72,14 @@ const getChartData = async()=>{
       type:"pie",
     }
   ]
-  const threeChart = echarts.init(proxy.$refs['videoEchart'])
-  threeChart.setOption(pieOptions)
+  chartInstances.value.threeChart = echarts.init(proxy.$refs['videoEchart'])
+  chartInstances.value.threeChart.setOption(pieOptions)
 
   //监听窗口大小变化
   observer.value = new ResizeObserver((en)=>{
-    oneEchart.resize()
-    twoEchart.resize()
-    threeChart.resize()
+    chartInstances.value.oneEchart?.resize()
+    chartInstances.value.twoEchart?.resize()
+    chartInstances.value.threeChart?.resize()
   })
   //监听折线图
   if(proxy.$refs['echart']){
@@ -99,6 +93,29 @@ onMounted(()=>{
   getChartData()
 })
 
+// 组件卸载前清理资源
+onBeforeUnmount(() => {
+  // 断开ResizeObserver监听
+  if (observer.value) {
+    observer.value.disconnect()
+    observer.value = null
+  }
+  
+  // 销毁所有echarts实例
+  if (chartInstances.value.oneEchart) {
+    chartInstances.value.oneEchart.dispose()
+    chartInstances.value.oneEchart = null
+  }
+  if (chartInstances.value.twoEchart) {
+    chartInstances.value.twoEchart.dispose()
+    chartInstances.value.twoEchart = null
+  }
+  if (chartInstances.value.threeChart) {
+    chartInstances.value.threeChart.dispose()
+    chartInstances.value.threeChart = null
+  }
+})
+
 
 const tableLabel = ref({
     name: "课程",
@@ -108,7 +125,7 @@ const tableLabel = ref({
 })
 //这个是折线图和柱状图 两个图表共用的公共配置
 //折线图和柱状图的配置项
-const xOptions = reactive({
+const xOptions: any = reactive({
       // 图例文字颜色
       textStyle: {
         color: "#333",
@@ -148,7 +165,7 @@ const xOptions = reactive({
       series: [],
 })
 //饼图的配置项
-const pieOptions = reactive({
+const pieOptions: any = reactive({
   tooltip: {
     trigger: "item",
   },

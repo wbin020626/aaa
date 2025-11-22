@@ -1,7 +1,13 @@
 // src/api/request.ts
-import axios from 'axios'
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus' //错误提示
 import config from '@/config'
+
+// 扩展请求配置类型，添加mock选项
+interface RequestOptions extends AxiosRequestConfig {
+  mock?: boolean
+}
+
 //创建axios实例
 const service = axios.create({
   baseURL:config.baseApi,
@@ -27,8 +33,10 @@ service.interceptors.response.use(
     if (code === 200) {
       return data
     } else {
-      ElMessage.error(msg || NETWORK_ERROR_MESSAGE)
-      return Promise.reject(new Error(msg || NETWORK_ERROR_MESSAGE))
+      // 错误信息可能在msg或data.message中
+      const errorMessage = msg || data?.message || NETWORK_ERROR_MESSAGE
+      ElMessage.error(errorMessage)
+      return Promise.reject(new Error(errorMessage))
     }
   },
   (error) => {
@@ -37,13 +45,13 @@ service.interceptors.response.use(
   },
 )
 
-function request(options) {
+function request(options: RequestOptions) {
   options.method = options.method || 'GET'
   //关于get请求参数的调整:将data参数拼接到params中
   if(options.method.toLowerCase() === 'get'){
     options.params = options.data
-  }else{
-    options.data = options.data
+    // GET请求不需要body，避免冗余
+    delete options.data
   }
   //关于mock的调整
   let isMock = config.mock

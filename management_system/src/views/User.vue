@@ -105,22 +105,34 @@ import { el } from 'element-plus/es/locales.mjs';
 import { ref,getCurrentInstance, reactive,onMounted,nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 
+// 定义用户表单接口
+interface UserForm {
+  id?: string
+  name: string
+  age: number | string
+  sex: string
+  birth: string | Date
+  addr: string
+}
+
 const router = useRouter()
 
 const tableData =ref([])
-const {proxy} = getCurrentInstance()
+const {proxy} = getCurrentInstance() as any
 
-const getUserData = async(config)=>{
-  //调用api，传入config参数
-  const res = await proxy.$api.getUserData(config)
+const getUserData = async(params: typeof config)=>{
+  //调用api，传入params参数
+  const res = await proxy.$api.getUserData(params)
   console.log("筛选后的数据",res)
-  tableData.value = res.list.map((item)=>{
+  tableData.value = res.list.map((item: any)=>{
     return {
       ...item,
-      sexLabel:item.sex==='1'?"男":"女"
+      // 支持数字和字符串类型，统一转换为字符串判断
+      sexLabel: String(item.sex) === '1' ? '男' : '女'
     }
   })
-  config.total=res.count
+  // 更新总数，用于分页器显示
+  config.total = res.count
 }
 
 // 定义表格列配置
@@ -156,7 +168,7 @@ const formInline = reactive({
 // 确定按钮，提交表单
 const action = ref('add')
 const dialogVisible = ref(false)
-const formUser = reactive({})
+const formUser = reactive<Partial<UserForm>>({})
 //表单校验规则
 const rules = reactive({
   name: [{ required: true, message: "姓名是必填项", trigger: "blur" }],
@@ -181,12 +193,12 @@ const handleSearch = () => {
   getUserData(config)
 }
 
-const handleChange = (page)=>{
+const handleChange = (page: number)=>{
   config.page = page
   getUserData(config)
 }
 
-const handleDelete = (val)=>{
+const handleDelete = (val: any)=>{
   ElMessageBox.confirm("你确定要删除吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -201,16 +213,26 @@ const handleDelete = (val)=>{
 const handleAdd = () => {
   dialogVisible.value = true
   action.value = 'add'
-  // 清空 reactive 对象
-  Object.keys(formUser).forEach(key => delete formUser[key])
+  // 清空 reactive 对象 - 使用 Object.assign 保持响应式
+  Object.assign(formUser, {
+    name: '',
+    age: '',
+    sex: '',
+    birth: '',
+    addr: ''
+  })
+  // 清除表单验证状态
+  nextTick(() => {
+    proxy.$refs.userForm?.clearValidate()
+  })
 }
 //时间格式化
-const timeFormat = (time)=>{
-  var time = new Date(time)
-  let year = time.getFullYear()
-  let month = time.getMonth()+1
-  let day = time.getDate()
-  function add(m){
+const timeFormat = (time: Date | string | number)=>{
+  const date = new Date(time)
+  let year = date.getFullYear()
+  let month = date.getMonth()+1
+  let day = date.getDate()
+  function add(m: number){
     return m<10?"0"+m:m
   }
   return year+"-"+add(month)+"-"+add(day)
@@ -218,10 +240,15 @@ const timeFormat = (time)=>{
 //编辑操作新增用户
 const onSubmit = async() => {
   // 表单校验
-  proxy.$refs.userForm.validate(async(valid)=>{
+  proxy.$refs.userForm.validate(async(valid: boolean)=>{
     if(valid){
       let res = null
-      formUser.birth = /^\d{4}-\d{2}-\d{2}$/.test(formUser.birth)?formUser.birth:timeFormat(formUser.birth)
+      // 格式化出生日期，添加类型保护
+      if (formUser.birth) {
+        formUser.birth = /^\d{4}-\d{2}-\d{2}$/.test(formUser.birth as string) 
+          ? formUser.birth 
+          : timeFormat(formUser.birth)
+      }
       if(action.value == 'add'){
         res = await proxy.$api.addUser(formUser)
       } else{
@@ -245,23 +272,45 @@ const onSubmit = async() => {
 const handleClose = () => {
   // 关闭弹窗，清空表单
   dialogVisible.value = false
-  Object.keys(formUser).forEach(key => delete formUser[key])
+  // 清空 reactive 对象 - 使用 Object.assign 保持响应式
+  Object.assign(formUser, {
+    name: '',
+    age: '',
+    sex: '',
+    birth: '',
+    addr: ''
+  })
+  // 清除表单验证状态
+  proxy.$refs.userForm?.clearValidate()
 }
 const handleCancel = () => {
   // 取消按钮，关闭弹窗
   dialogVisible.value = false
+  // 清空 reactive 对象 - 使用 Object.assign 保持响应式
+  Object.assign(formUser, {
+    name: '',
+    age: '',
+    sex: '',
+    birth: '',
+    addr: ''
+  })
+  // 清除表单验证状态
+  proxy.$refs.userForm?.clearValidate()
 }
 
 onMounted(()=>{
   getUserData(config)
 })
 
-const handleEdit = (row) => {
+const handleEdit = (row: any) => {
   action.value = 'edit'
   dialogVisible.value = true
   nextTick(() => {
-    // 将选中行的数据复制到表单中，并确保性别为字符串类型
-    Object.assign(formUser, {...row, sex: String(row.sex)})
+    // 将选中行的数据复制到表单中，确保性别为字符串类型（与表单选项保持一致）
+    Object.assign(formUser, {
+      ...row,
+      sex: String(row.sex) // 统一转换为字符串
+    })
   })
 }
 

@@ -65,6 +65,7 @@ router.beforeEach(async (to: RouteLocationNormalized, from: RouteLocationNormali
   const store = useAllDataStore()
   const { state, accessibleRouteNames } = storeToRefs(store)
   const token = state.value.token
+  const menuList = state.value.menuList
   const accessibleRoutes = accessibleRouteNames.value
 
   // 1. 未登录状态：跳转到登录页
@@ -83,6 +84,20 @@ router.beforeEach(async (to: RouteLocationNormalized, from: RouteLocationNormali
     // 首页默认允许访问
     if (to.name === 'home') {
       next()
+      return
+    }
+
+    // 如果菜单列表为空，说明动态路由还未加载，直接放行
+    // 这种情况通常发生在页面刷新时，menuList会在Login组件中重新加载
+    if (menuList.length === 0) {
+      // 如果是从登录页来的，说明刚登录，菜单正在加载中
+      if (from.name === 'login') {
+        next()
+        return
+      }
+      // 否则说明token可能已过期或数据丢失，需要重新登录
+      ElMessage.warning('登录信息已失效，请重新登录')
+      next('/login')
       return
     }
 

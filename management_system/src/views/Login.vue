@@ -45,8 +45,9 @@ const handleLogin = async () => {
   } catch (error) {
     // 错误处理逻辑
     console.error('登录失败:', error)
-    // 显示错误信息，优先使用错误响应中的信息，否则使用默认信息
-    const errorMsg = error.response?.data?.message || '登录失败，请检查账号密码'
+    // Mock返回的错误信息在error.message中（来自request.ts的响应拦截器）
+    // 如果有错误消息则显示，否则使用默认提示
+    const errorMsg = error?.message || '登录失败，请检查账号密码'
     ElMessage.error(errorMsg)
   }
 }

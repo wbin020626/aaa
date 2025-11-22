@@ -35,6 +35,7 @@ import CommonTab from '@/components/CommonTab.vue'
   width: 100%;
   height: 100vh; /* 使用视口高度 */
   display: flex; /* 确保弹性布局 */
+  overflow: hidden; /* 防止整体滚动 */
 }
 
 .el-aside {
@@ -44,11 +45,16 @@ import CommonTab from '@/components/CommonTab.vue'
 .el-header {
   background-color: #333;
   height: 60px; /* 固定高度 */
+  flex-shrink: 0; /* 防止被压缩 */
 }
 
+// CommonTab区域的高度约为60px（包含margin）
 .right-main {
   padding: 20px;
   background-color: #f5f5f5;
-  height: calc(100vh - 60px); /* 计算剩余高度 */
+  // 不再使用固定高度计算，让flex自动填充剩余空间
+  flex: 1;
+  overflow-y: auto; /* 内容区域可滚动 */
+  overflow-x: hidden; /* 防止横向滚动 */
 }
 </style>

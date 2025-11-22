@@ -71,17 +71,11 @@ export const useAllDataStore = defineStore('allData', () =>{
         item.children.forEach((child) => {
           const url = `/src/views/${child.url}.vue`
           child.component = modules[url]
-          if (!child.component) {
-            console.error(`组件未找到: ${url}`)
-          }
         })
         routeArray.push(...item.children)
       } else {
         const url = `/src/views/${item.url}.vue`
         item.component = modules[url]
-        if (!item.component) {
-          console.error(`组件未找到: ${url}`)
-        }
         routeArray.push(item)
       }
     })
@@ -90,7 +84,6 @@ export const useAllDataStore = defineStore('allData', () =>{
       if (item.component && !router.hasRoute(item.name)) {
         state.value.routerList.push(item)
         router.addRoute('main', item)
-        console.log(`路由已添加: ${item.name}`)
       }
     })
   }

@@ -69,19 +69,33 @@ const handleMenu = (tag) => {
 
 // 关闭标签时的处理
 const handleClose = (tag, index) => {
-  store.updateTags(tag)
-
-  // 如果关闭的是当前激活的标签，需要跳转
+  // 如果关闭的是当前激活的标签，需要先确定跳转目标
   if (tag.path === route.path) {
     const currentTags = tags.value
-    // 跳转规则：如果还有其他标签，跳转到前一个；否则跳首页
-    if (currentTags.length > 0) {
-      const targetIndex = Math.max(0, index - 1)
-      router.push(currentTags[targetIndex].path)
-    } else {
+    
+    // 如果只剩一个标签（首页），直接跳转首页
+    if (currentTags.length <= 1) {
       router.push('/home')
+    } else {
+      // 确定跳转目标：优先跳转到右边的标签，如果没有则跳转到左边
+      let targetTag
+      if (index < currentTags.length - 1) {
+        // 当前标签不是最后一个，跳转到右边的标签
+        targetTag = currentTags[index + 1]
+      } else {
+        // 当前标签是最后一个，跳转到左边的标签
+        targetTag = currentTags[index - 1]
+      }
+      
+      // 先跳转再删除，避免索引问题
+      if (targetTag) {
+        router.push(targetTag.path)
+      }
     }
   }
+  
+  // 最后删除标签
+  store.updateTags(tag)
 }
 </script>
 
