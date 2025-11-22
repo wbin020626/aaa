@@ -29,7 +29,6 @@
         v-for="item in hasChildren"
         :key="item.path"
         :index="item.path"
-        @click="handleMenu(item)"
       >
         <template #title>
           <component class="icons" :is="item.icon"></component>
@@ -37,7 +36,12 @@
         </template>
 
         <!-- 正确的子菜单位置 -->
-        <el-menu-item v-for="subItem in item.children" :key="subItem.path" :index="subItem.path">
+        <el-menu-item 
+          v-for="subItem in item.children" 
+          :key="subItem.path" 
+          :index="subItem.path"
+          @click="handleMenu(subItem)"
+        >
           <component class="icons" :is="subItem.icon"></component>
           <span>{{ subItem.label }}</span>
         </el-menu-item>

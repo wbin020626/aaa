@@ -63,9 +63,9 @@ const router = createRouter({
 // 全局前置守卫
 router.beforeEach(async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
   const store = useAllDataStore()
-  const { state } = storeToRefs(store)
+  const { state, accessibleRouteNames } = storeToRefs(store)
   const token = state.value.token
-  const accessibleRoutes = state.value.accessibleRouteNames
+  const accessibleRoutes = accessibleRouteNames.value
 
   // 1. 未登录状态：跳转到登录页
   if (!token) {

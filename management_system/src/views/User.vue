@@ -201,7 +201,8 @@ const handleDelete = (val)=>{
 const handleAdd = () => {
   dialogVisible.value = true
   action.value = 'add'
-  formUser.value = {}
+  // 清空 reactive 对象
+  Object.keys(formUser).forEach(key => delete formUser[key])
 }
 //时间格式化
 const timeFormat = (time)=>{
@@ -244,7 +245,7 @@ const onSubmit = async() => {
 const handleClose = () => {
   // 关闭弹窗，清空表单
   dialogVisible.value = false
-  formUser.value = {}
+  Object.keys(formUser).forEach(key => delete formUser[key])
 }
 const handleCancel = () => {
   // 取消按钮，关闭弹窗

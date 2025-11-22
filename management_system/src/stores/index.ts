@@ -1,5 +1,5 @@
 // src/stores/index.js
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 function initState() {
@@ -17,6 +17,22 @@ export const useAllDataStore = defineStore('allData', () =>{
 
   // 点击菜单时添加标签的方法
   const state = ref(initState())
+  
+  // 计算属性：获取可访问的路由名称列表
+  const accessibleRouteNames = computed(() => {
+    const names = ['home'] // 首页默认可访问
+    state.value.menuList.forEach((item) => {
+      if (item.children) {
+        item.children.forEach((child) => {
+          names.push(child.name)
+        })
+      } else {
+        names.push(item.name)
+      }
+    })
+    return names
+  })
+  
   function selectMenu(val) {
     // 如果是首页，不需要额外处理（已默认存在）
     if (val.name === 'home') {
@@ -38,6 +54,10 @@ export const useAllDataStore = defineStore('allData', () =>{
 
   function updateMenuList(val) {
     state.value.menuList = val
+  }
+
+  function toggleCollapse() {
+    state.value.isCollapse = !state.value.isCollapse
   }
 
   //动态路由
@@ -74,5 +94,5 @@ export const useAllDataStore = defineStore('allData', () =>{
       }
     })
   }
-  return { state, selectMenu, updateTags, updateMenuList, addMenu }
+  return { state, accessibleRouteNames, selectMenu, updateTags, updateMenuList, toggleCollapse, addMenu }
 })

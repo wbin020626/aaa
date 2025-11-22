@@ -33,7 +33,7 @@ const getImageUrl = (user: string) => {
 }
 const store = useAllDataStore()
 const handleCollapse = () => {
-  store.isCollapse = !store.isCollapse
+  store.toggleCollapse()
 }
 </script>
 
